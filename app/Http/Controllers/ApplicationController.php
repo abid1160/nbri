@@ -52,28 +52,32 @@ class ApplicationController extends Controller
         ]);
     
         $imagePath = null;
-        if ($request->hasFile('image')) {
-            // Store the image in the 'public/images' directory
-            $imagePath = $request->file('image')->store('images', 'public');
-            // This saves the file with a unique name
-        }
 
-          // Generate application_id using the CSRF token, current year, and a random 4-digit number
-          $currentYear = Carbon::now()->year; // Get the current year using Carbon
-          $csrfToken = substr($request->_token, 0, 8); // Take the first 8 characters of the CSRF token directly
-          $randomNumber = rand(1000, 9999); // Generate random 4-digit number
-          
-          // Combine them to form the unique application_id
-          $applicationId = "NBRI{$currentYear}-{$csrfToken}-{$randomNumber}";
-          
-    
+        if ($request->hasFile('image')) {
+            // Store the image in the 'public/uploads/bookingimages' directory
+            $imageFile = $request->file('image');
+            $fileName = time() . '.' . $imageFile->getClientOriginalExtension();
+            $imageFile->move(public_path('uploads/bookingimages'), $fileName);
+            
+            // Set the $imagePath to the relative path where the image is stored
+            $imagePath = 'uploads/bookingimages/' . $fileName;
+        }
+        
+        // Generate application_id using the CSRF token, current year, and a random 4-digit number
+        $currentYear = Carbon::now()->year; // Get the current year using Carbon
+        $randomNumber = rand(10000, 99999); // Generate random 5-digit number
+        
+        // Combine them to form the unique application_id
+        $applicationId = "NBRI/{$currentYear}/{$randomNumber}";
+        
+        
         // Store the application data in the applications table
         $application = new Application();
         $application->application_name = $validated['application_name'];
         $application->application_id = $applicationId;
         $application->organization_type = $validated['organization_type'];
         $application->designation = $validated['designation'];
-        $application->employee_id= $validated['employee_id'];
+        $application->employee_id = $validated['employee_id'];
         $application->contact_no = $validated['contact_no'];
         $application->email = $validated['email'];
         $application->purpose = $validated['purpose'];
@@ -83,20 +87,22 @@ class ApplicationController extends Controller
         $application->departure_time = $validated['departure_time'];
         $application->room = $validated['room'];
         $application->payment = $validated['payment'];
-    
+        
         // If organization is selected via organization_type, store the organization ID
         if ($validated['organization_type'] == 'CSIR' && $request->organization) {
             $application->organization_id = $validated['organization'][0];  // Storing the organization ID
         } elseif ($validated['organization_type'] == 'Non-CSIR' && $request->manual_organization) {
             $application->manual_organization = $validated['manual_organization'];  // Storing the manual organization name
         }
-    
+        
+        // If imagePath is set, store the image path
         if ($imagePath) {
             $application->image_path = $imagePath;  // Save the image path
         }
-    
-        // Save the application and retrieve the application ID
+        
+        // Save the application data to the database
         $application->save();
+        
     
         // Store guests data related to this application
         foreach ($request->guest_name as $index => $guestName) {
@@ -115,6 +121,16 @@ class ApplicationController extends Controller
         // Redirect with a success message
         return redirect()->route('practise')->with('success', 'Application created successfully');
     }
-    
+    public function view(){
+       return view('member');
+    }
+
+    public function detail(){
+        return view('detail');
+    }
     
 }
+
+
+// code for the member
+

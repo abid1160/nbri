@@ -19,4 +19,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/',[ApplicationController::class,'index'])->name('practise');
 Route::post('/store',[ApplicationController::class,'store'])->name('store');
+Route::get('/member/list',[ApplicationController::class,'view'])->name('member.view');
+Route::get('/member/detail',[ApplicationController::class,'detail'])->name('member.detail');
 
